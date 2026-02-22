@@ -22,6 +22,9 @@ def main():
     # Optional calculation parameters
     parser.add_argument("--scan_gap", type=float, default=0.1, help="Advance in Y axis per line for Raster (Default = 0.1mm)")
     parser.add_argument("--ppi", type=float, default=25.4, help="Pixels Per Inch of the SVG. If 1 unit in SVG should be 1mm, use 25.4 (Default). If using 100 DPI, use 100.")
+    parser.add_argument("--accel", type=float, default=500.0, help="Machine acceleration in mm/s² (Default = 500)")
+    parser.add_argument("--junction_delay", type=float, default=0.05, help="Time loss at each path vertex in seconds (Default = 0.05)")
+    parser.add_argument("--burn_dwell", type=float, default=0.1, help="Time loss at each cut start in seconds (Default = 0.1)")
     
     args = parser.parse_args()
     
@@ -32,7 +35,7 @@ def main():
         
         if not entities:
             print(json.dumps({
-                "error": "No valid laser operation paths (Red, Green, or Blue) found in the provided SVG."
+                "error": "No valid laser operation paths found in the provided SVG."
             }, indent=2))
             sys.exit(1)
             
@@ -42,6 +45,9 @@ def main():
             vector_engrave_speed=args.vector_engrave_speed,
             raster_engrave_speed=args.raster_engrave_speed,
             transit_speed=args.transit_speed,
+            acceleration=args.accel,
+            junction_delay=args.junction_delay,
+            burn_dwell=args.burn_dwell,
             scan_gap=args.scan_gap
         )
         
