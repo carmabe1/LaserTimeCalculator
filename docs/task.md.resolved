@@ -1,0 +1,34 @@
+# LaserTimeCalculator Roadmap
+
+## Phase 1: Core Parsing & Engine Setup 
+- [x] Implement SVG parsing using a library like `svgelements` to extract paths, colors and curves.
+- [x] Create data structures to represent entities with attributes (path, length, color_type).
+- [x] Implement algorithms to discretize Bézier curves into line segments.
+- [x] Write logic to classify entities by color (Red=Cut, Green=Mark, Blue=Raster).
+- [x] Create unit tests for parsing and classification.
+
+## Phase 2: Math & Distance Calculations
+- [x] Develop functions to calculate the perimeter (length) of vectors (Cut & Mark).
+- [x] Implement the logic for Raster Engraving (calculating bounding boxes, scan lines, and overscan).
+- [x] Write logic to calculate transit distances (G0 moves) between entities.
+- [x] Implement TSP (Traveling Salesperson Problem) approximation or nearest-neighbor for optimizing transit paths.
+- [x] Create tests to ensure accuracy of area and distance calculations.
+
+## Phase 3: Time Estimation Logic
+- [x] Build the core calculator function that takes entity data and configuration parameters (speeds, scan_gap) to compute times.
+- [x] Implement logic to calculate time for cutting (`distance / cut_speed`).
+- [x] Implement logic to calculate time for marking (`distance / vector_engrave_speed`).
+- [x] Implement logic to calculate time for rastering ([(width/speed) * (height/scan_gap) + overscan](file:///home/owner/Documentos/Personal/emprendimiento/laser/LaserTimeCalculator/src/main.py#7-54)).
+- [x] Add calculation for transit time (`transit_distance / transit_speed`).
+- [x] Aggregation of all times into the final total and format as `HH:MM:SS`.
+
+## Phase 4: Integration & Output
+- [x] Develop the main entry point (`CLI` or simple API) to accept SVG file paths and parameter inputs.
+- [x] Format the final output as a structured JSON.
+- [x] Handle potential errors (invalid SVG, missing colors, unclosed paths).
+- [x] Comprehensive End-to-End testing with sample SVG files.
+
+## Phase 5: Refinement
+- [x] Review performance on large/complex SVGs.
+- [x] Refactor and optimize distance/discretization logic if needed.
+- [x] Code cleanup and documentation.

@@ -21,12 +21,13 @@ def main():
     
     # Optional calculation parameters
     parser.add_argument("--scan_gap", type=float, default=0.1, help="Advance in Y axis per line for Raster (Default = 0.1mm)")
+    parser.add_argument("--ppi", type=float, default=25.4, help="Pixels Per Inch of the SVG. If 1 unit in SVG should be 1mm, use 25.4 (Default). If using 100 DPI, use 100.")
     
     args = parser.parse_args()
     
     try:
         # 1. Parse original SVG
-        svg_parser = SVGParser(args.file)
+        svg_parser = SVGParser(args.file, ppi=args.ppi)
         entities = svg_parser.parse()
         
         if not entities:

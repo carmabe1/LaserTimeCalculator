@@ -1,6 +1,7 @@
 import svgelements
 from dataclasses import dataclass
 from typing import List
+from svgelements import Matrix
 
 @dataclass
 class LaserEntity:
@@ -19,8 +20,10 @@ class SVGParser:
         '#0000FF': 'raster'    # Blue
     }
     
-    def __init__(self, filepath: str):
+    def __init__(self, filepath: str, ppi: float = 96.0):
         self.filepath = filepath
+        self.ppi = ppi
+        # Parse using default internal PPI (96) to keep units as pixels
         self.svg = svgelements.SVG.parse(filepath)
         self.entities: List[LaserEntity] = []
 
@@ -58,6 +61,13 @@ class SVGParser:
                     
             # If a valid process color was found, append the entity
             if process_color:
+                # Scale the path to mm units: (pixel_unit * 25.4 / ppi) = mm
+                scale_factor = 25.4 / self.ppi
+                path *= Matrix.scale(scale_factor)
+                
+                # Bake the transformation into the path so length() calculation is accurate
+                path.reify()
+                
                 entity = LaserEntity(
                     path=path,
                     color_hex=process_color,

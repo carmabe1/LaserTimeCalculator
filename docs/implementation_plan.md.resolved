@@ -1,0 +1,58 @@
+# Implementación de LaserTimeCalculator
+
+Este documento define el plan de desarrollo para el motor de estimación de tiempos de corte y grabado láser. Se enfoca en resolver los cálculos matemáticos para SVG y reportar los tiempos por capa.
+
+## User Review Required
+
+> [!IMPORTANT]
+> **Stack Tecnológico:**
+> Se propone **Python** como lenguaje principal dado su robusto ecosistema para procesamiento matemático e integración con librerías como `svgelements`. ¿Estás de acuerdo con utilizar Python para este ejecutable?
+>
+> **Librería de SVG:**
+> Sugiero usar `svgelements` para procesar paths, polígonos y curvas de Bézier nativamente.
+
+## Proposed Changes
+
+La estructura del proyecto en `src/` se organizará de la siguiente manera:
+
+### Core Engine & Parsers
+
+#### [NEW] [svg_parser.py](file:///home/owner/Documentos/Personal/emprendimiento/laser/LaserTimeCalculator/src/parsers/svg_parser.py)
+*   Integrará `svgelements` para leer el SVG.
+*   Extraerá y clasificará cada entidad según su color `stroke` o `fill` (Rojo, Verde, Azul).
+*   Convertirá formas básicas (círculos, rectángulos) en `Path` equivalentes.
+
+#### [NEW] [math_engine.py](file:///home/owner/Documentos/Personal/emprendimiento/laser/LaserTimeCalculator/src/engine/math_engine.py)
+*   **Discretización de Bézier:** Función para aproximar curvas a pequeños segmentos de línea para calcular la longitud real.
+*   **Cálculo de Perímetro:** Sumatoria de las longitudes de los segmentos de un `Path`.
+*   **Cálculo de Área (Bounding Box):** Para calcular el área de las geometrías de grabado (Azul).
+
+#### [NEW] [calculator.py](file:///home/owner/Documentos/Personal/emprendimiento/laser/LaserTimeCalculator/src/engine/calculator.py)
+*   Recibirá las entidades parseadas y parámetros de velocidad.
+*   Implementará las fórmulas de negocio:
+    *   **Cut (Rojo):** `Tiempo = Longitud / cut_speed`
+    *   **Mark (Verde):** `Tiempo = Longitud / vector_engrave_speed`
+    *   **Raster (Azul):** `Tiempo = ((Ancho / raster_engrave_speed) * (Alto / scan_gap)) + Overscan`
+*   **Tránsito (G0):** Calculará la distancia euclidiana entre el final de un path y el inicio del siguiente, sumando `Distancia / transit_speed`.
+
+### Application Entry Point
+
+#### [MODIFY] [main.py](file:///home/owner/Documentos/Personal/emprendimiento/laser/LaserTimeCalculator/src/main.py)
+*   Implementará la interfaz CLI usando `argparse` para recibir el archivo `.svg` y los parámetros de configuración (velocidades y `scan_gap`).
+*   Inyectará el archivo al Parser, enviará las entidades al Calculator y generará el JSON final con el desglose HH:MM:SS.
+
+## Verification Plan
+
+### Automated Tests
+*   Se creará una suite de pruebas unidas en `tests/` utilizando `pytest`.
+*   **Pruebas de Parser:** Validar que se identifican correctamente las capas rojas, verdes y azules ignorando otros colores.
+*   **Pruebas de Geometría:** Probar con un SVG que contenga un cuadrado de 100x100mm. El cálculo de perímetro debería devolver exactamente 400mm.
+*   **Pruebas de Tiempo:** Validar la fórmula de Raster con valores quemados (ej. Área 100x100, Velocidad 10mm/s, Gap 0.1mm) frente al resultado matemático manual esperado.
+
+### Manual Verification
+1.  Se generarán 3 archivos SVG simples:
+    *   `only_cut.svg` (Un círculo rojo).
+    *   `raster_mark.svg` (Un cuadrado azul y estrellas verdes).
+    *   `complex_job.svg` (Capas combinadas).
+2.  Se ejecutará `python src/main.py <archivo.svg> --cut_speed X --raster_engrave_speed Y ...`.
+3.  Se verificará que el output JSON contiene el tiempo agrupado correctamente y ninguna capa extraña fue procesada.

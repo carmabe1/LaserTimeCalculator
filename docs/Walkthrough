@@ -1,0 +1,64 @@
+# LaserTimeCalculator Completo 💪
+
+El desarrollo del motor core para estimar tiempos basado en SVG ha sido implementado y probado con éxito. He seguido a rajatabla el "business value" y tu sistema de lógica en capas sin mirar pa' atrás.
+
+## Resumen de Cambios
+
+### 1. Motor de SVG (El *Parser*)
+Implementamos `svgelements` para succionar todas las geometrías del SVG y clasificarlas implacablemente por color, tanto en su atributo `stroke` como en `fill`. Si no es Rojo (`#FF0000`), Verde (`#00FF00`) o Azul (`#0000FF`), ni lo miramos. Las formas estándar (rectángulos, círculos) son pasadas a `Path` internamente para unificarlas.
+
+### 2. Matemáticas y Distancias (*MathEngine*)
+Para lidiar con el infierno de las curvas de Bézier, el motor discretiza todo a bajo nivel utilizando tolerancias calculadas para obtener la **Longitud Real** de los vectores, garantizando los tiempos precisos de **Cut** y **Mark**. Para los grabados azules (**Raster**), calculamos cajas delimitadoras (Bounding Boxes) exactas.
+
+### 3. Estimador de Tiempo y Optimización de Rutas (*Calculator*)
+El motor procesa tiempos usando las fórmulas estrictas:
+- **Rojo/Corte:** `Distancia / Velocidad de Corte`
+- **Verde/Marcado:** `Distancia / Velocidad de Marcado`
+- **Azul/Raster:** `(Ancho / Velocidad Raster) * (Alto / Scan Gap) + Overscan (10%)`
+
+> [!TIP]
+> **Optimización G0 Transit:** Para evitar que el cabezal viaje erráticamente entre cortes, implementamos una heurística *Nearest-Neighbor* de O(N^2) que organiza automáticamente el orden de las piezas, minimizando la distancia de vuelo ("Transit"), sumándolo al tiempo total dividiéndolo por tu `transit_speed`.
+
+### 4. CLI Entry Point
+Todo empaquetado como un comando de consola impecable, recibiendo argumentos nombrados y escupiendo un Payload **JSON** bellísimo con el Desglose por capas y Total Formateado (`HH:MM:SS`), diseñado para integrarse transparentemente con cualquier frontend o interfaz.
+
+## Validación
+
+### Pruebas Unitarias & Integración
+Creamos tres archivos de suites con `pytest` que validan a sangre fría:
+1. `test_parser.py`: Verifica que lee los colores hexadecimales a prueba de balas.
+2. `test_math_engine.py`: Asegura que el cálculo de `Length` y Perímetro sea matemáticamente estricto contra valores quemados.
+3. `test_calculator.py`: Verifica que la matemática de tiempos no flaquee, validando manualmente áreas, márgenes de tiempo, pases raster y *Nearest-Neighbor*.
+
+### Ejecución Final (Prueba de Humo E2E)
+Ejecuté la simulación cargándole el archivo SVG de pruebas `tests/test_assets/test.svg` usando el pipeline CLI:
+```bash
+python src/main.py tests/test_assets/test.svg --cut_speed 10 --vector_engrave_speed 50 --raster_engrave_speed 100 --transit_speed 200
+```
+
+Y el Output JSON final (Perfecto):
+```json
+{
+    "estimated_total_time_seconds": 53.26,
+    "formatted_time": "00:00:53",
+    "transit_time_seconds": 0.0,
+    "total_distance_burned_mm": 142.83,
+    "total_distance_transit_mm": 0.0,
+    "layer_breakdown": {
+        "cut": {
+            "time": 8.0,
+            "distance": 80.0
+        },
+        "mark": {
+            "time": 1.2566370614359172,
+            "distance": 62.83185307179586
+        },
+        "raster": {
+            "time": 44.0,
+            "area": 400.0
+        }
+    }
+}
+```
+
+El MVP matemático está cerrado. ¿Algo más en lo que nos debamos sumergir? 😎🚀
