@@ -2,3 +2,6 @@ svgelements
 scipy
 numpy
 pytest
+fastapi
+uvicorn
+python-multipart
